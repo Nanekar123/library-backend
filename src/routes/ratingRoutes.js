@@ -10,19 +10,56 @@ import {
 
 const router = express.Router();
 
-/* ADD RATING */
+/**
+ * @swagger
+ * tags:
+ *   name: Ratings
+ *   description: Book rating APIs
+ */
+
+/**
+ * @swagger
+ * /api/ratings:
+ *   post:
+ *     summary: Add rating
+ *     tags: [Ratings]
+ */
 router.post("/", addRating);
 
-/* ALL RATINGS */
+/**
+ * @swagger
+ * /api/ratings:
+ *   get:
+ *     summary: Get all ratings
+ *     tags: [Ratings]
+ */
 router.get("/", getRatings);
 
-/* ADMIN VIEW RATINGS WITH BOOK NAME */
+/**
+ * @swagger
+ * /api/ratings/books:
+ *   get:
+ *     summary: Get ratings with book name
+ *     tags: [Ratings]
+ */
 router.get("/books", getRatingsWithBook);
 
-/* GET AVERAGE RATING */
+/**
+ * @swagger
+ * /api/ratings/average/{bookId}:
+ *   get:
+ *     summary: Get average rating
+ *     tags: [Ratings]
+ */
 router.get("/average/:bookId", getAverageRating);
 
-/* AUTHOR VIEW ONLY THEIR BOOK RATINGS */
+/**
+ * @swagger
+ * /api/ratings/author/{authorId}:
+ *   get:
+ *     summary: Get ratings of author's books
+ *     tags: [Ratings]
+ */
 router.get("/author/:authorId", getAuthorBooksRatings);
 
 export default router;

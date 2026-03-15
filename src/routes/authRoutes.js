@@ -12,28 +12,131 @@ import uploadManuscript from "../utils/uploadManuscript.js";
 
 const router = express.Router();
 
-/* USER REGISTER */
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication APIs
+ */
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register normal user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User registered successfully
+ */
 router.post("/register", register);
 
-/* AUTHOR REGISTER WITH MANUSCRIPT */
 
+/**
+ * @swagger
+ * /api/auth/register-author:
+ *   post:
+ *     summary: Register author with manuscript upload
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               manuscript:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Author registered successfully
+ */
 router.post(
 "/register-author",
 uploadManuscript.single("manuscript"),
 registerAuthor
 );
 
-/* LOGIN */
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP sent to email
+ */
 router.post("/login", login);
 
-/* VERIFY OTP */
 
+/**
+ * @swagger
+ * /api/auth/verify-login-otp:
+ *   post:
+ *     summary: Verify login OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
 router.post("/verify-login-otp", verifyLoginOtp);
 
-/* RESEND OTP */
 
+/**
+ * @swagger
+ * /api/auth/resend-otp:
+ *   post:
+ *     summary: Resend OTP to user
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully
+ */
 router.post("/resend-otp", resendOtp);
+
 
 export default router;

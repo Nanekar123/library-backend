@@ -8,16 +8,47 @@ import {
 
 const router = express.Router();
 
-// 📚 issue a book
+/**
+ * @swagger
+ * tags:
+ *   name: Rentals
+ *   description: Book issue and return APIs
+ */
+
+/**
+ * @swagger
+ * /api/issues:
+ *   post:
+ *     summary: Issue a book
+ *     tags: [Rentals]
+ */
 router.post("/", issueBook);
 
-// 🔁 return a book
+/**
+ * @swagger
+ * /api/issues/return/{id}:
+ *   put:
+ *     summary: Return a book
+ *     tags: [Rentals]
+ */
 router.put("/return/:id", returnBook);
 
-// 📋 get all issue history
+/**
+ * @swagger
+ * /api/issues:
+ *   get:
+ *     summary: Get all issue history
+ *     tags: [Rentals]
+ */
 router.get("/", getAllIssues);
 
-// 📌 get only active (not returned)
+/**
+ * @swagger
+ * /api/issues/active:
+ *   get:
+ *     summary: Get active issues
+ *     tags: [Rentals]
+ */
 router.get("/active", getActiveIssues);
 
 export default router;
