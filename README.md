@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Library Management System Backend provides REST APIs for managing books, users, authors, rentals, and analytics within a digital library platform.
+The **Library Management System Backend** provides RESTful APIs for managing books, users, authors, rentals, reviews, notifications, and analytics within a digital library platform.
 
-The backend is built using **Node.js, Express.js, and MySQL**, following a modular **MVC architecture** for scalability and maintainability.
+The system is built using **Node.js, Express.js, and MySQL** and follows a modular **MVC architecture** for maintainability and scalability.
 
-It supports **role-based access control** for:
+The application supports **role-based access control** for:
 
 * Admin
 * Author
@@ -20,121 +20,179 @@ It supports **role-based access control** for:
 * Express.js
 * MySQL
 * JWT Authentication
-* Multer (File Upload)
+* Multer (File Uploads)
+* Axios (API communication)
 * Rate Limiting Middleware
+
+---
+
+## System Architecture
+
+The application follows a **three-tier architecture**.
+
+Frontend → Backend → Database
+
+```text
+React Frontend
+      │
+      │ HTTP Requests
+      ▼
+Node.js / Express Backend
+      │
+      │ SQL Queries
+      ▼
+MySQL Database
+```
+
+### Components
+
+**Frontend**
+
+* React based UI
+* Sends API requests using Axios
+
+**Backend**
+
+* Express REST APIs
+* Business logic and authentication
+
+**Database**
+
+* MySQL relational database
+* Stores books, users, issues and analytics data
 
 ---
 
 ## Project Structure
 
 ```
-src
+library-backend
 │
-├── config
-│   └── db.js
+├── src
+│   ├── config
+│   │   └── db.js
 │
-├── controllers
-│   ├── authController.js
-│   ├── bookController.js
-│   ├── issueController.js
-│   ├── ratingController.js
-│   ├── analyticsController.js
-│   ├── authorController.js
-│   ├── manuscriptController.js
-│   ├── notificationController.js
-│   ├── reviewController.js
-│   ├── wishlistController.js
-│   └── userController.js
+│   ├── controllers
+│   │   ├── authController.js
+│   │   ├── bookController.js
+│   │   ├── issueController.js
+│   │   ├── ratingController.js
+│   │   ├── analyticsController.js
+│   │   ├── authorController.js
+│   │   ├── manuscriptController.js
+│   │   ├── notificationController.js
+│   │   ├── reviewController.js
+│   │   ├── wishlistController.js
+│   │   └── userController.js
 │
-├── middleware
-│   ├── authMiddleware.js
-│   ├── roleMiddleware.js
-│   ├── rateLimiter.js
-│   └── upload.js
+│   ├── middleware
+│   │   ├── authMiddleware.js
+│   │   ├── roleMiddleware.js
+│   │   ├── rateLimiter.js
+│   │   └── upload.js
 │
-├── models
-│   ├── Book.js
-│   ├── Issue.js
-│   ├── Rating.js
-│   └── User.js
+│   ├── models
+│   │   ├── Book.js
+│   │   ├── Issue.js
+│   │   ├── Rating.js
+│   │   └── User.js
 │
-├── routes
-│   ├── authRoutes.js
-│   ├── bookRoutes.js
-│   ├── issueRoutes.js
-│   ├── ratingRoutes.js
-│   ├── authorRoutes.js
-│   ├── manuscriptRoutes.js
-│   ├── wishlistRoutes.js
-│   ├── notificationRoutes.js
-│   └── analyticsRoutes.js
+│   ├── routes
+│   │   ├── authRoutes.js
+│   │   ├── bookRoutes.js
+│   │   ├── issueRoutes.js
+│   │   ├── ratingRoutes.js
+│   │   ├── authorRoutes.js
+│   │   ├── manuscriptRoutes.js
+│   │   ├── wishlistRoutes.js
+│   │   ├── notificationRoutes.js
+│   │   └── analyticsRoutes.js
 │
-└── utils
+│   └── utils
+│
+├── uploads
+├── server.js
+├── package.json
+└── README.md
 ```
 
 ---
 
-## Features
+## Key Features
 
-### Authentication
+* Role-based authentication (Admin, Author, Reader)
+* Book catalog management
+* Book issue and return lifecycle
+* Ratings and reviews system
+* Author manuscript submission
+* Wishlist functionality
+* Admin analytics dashboard
+* Notification services
 
-* User registration and login
-* JWT authentication
-* Role-based authorization
+---
 
-### Book Management
+## Example API Endpoints
 
-* Add books
-* Update books
-* Delete books
-* Browse available books
+### Login
 
-### Issue & Return System
+POST `/api/auth/login`
 
-* Issue books
-* Track return status
-* Maintain issue history
+Request
 
-### Ratings & Reviews
+```
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
-* Users can rate books
-* Write reviews for books
+Response
 
-### Author Module
+```
+{
+  "token": "jwt_token",
+  "user": {
+    "id": 1,
+    "role": "reader"
+  }
+}
+```
 
-* Author onboarding
-* Manuscript submissions
+---
 
-### Wishlist
+### Get Books
 
-* Users can maintain reading wishlists
+GET `/api/books`
 
-### Notifications
+Response
 
-* Event-based notification service
-
-### Analytics
-
-* Admin insights and activity metrics
+```
+[
+  {
+    "id": 1,
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "rating": 4.8
+  }
+]
+```
 
 ---
 
 ## Installation
 
-### Clone repository
+Clone repository
 
 ```
 git clone https://github.com/Nanekar123/library-backend.git
 cd library-backend
 ```
 
-### Install dependencies
+Install dependencies
 
 ```
 npm install
 ```
-
-### Setup environment variables
 
 Create `.env`
 
@@ -147,13 +205,13 @@ DB_NAME=library_db
 JWT_SECRET=secretkey
 ```
 
-### Start server
+Start server
 
 ```
 npm start
 ```
 
-Server runs at:
+Server runs at
 
 ```
 http://localhost:5000
@@ -161,28 +219,11 @@ http://localhost:5000
 
 ---
 
-## API Modules
+## Frontend Repository
 
-| Module        | Description           |
-| ------------- | --------------------- |
-| Auth          | Authentication APIs   |
-| Books         | Book management       |
-| Issues        | Book issue and return |
-| Ratings       | Book ratings          |
-| Authors       | Author management     |
-| Manuscripts   | Author submissions    |
-| Wishlist      | User wishlist         |
-| Notifications | User notifications    |
-| Analytics     | Admin analytics       |
+Frontend UI:
 
----
-
-## Security
-
-* JWT authentication
-* Role-based access control
-* Rate limiting
-* Input validation
+https://github.com/Nanekar123/library-frontend
 
 ---
 
@@ -190,5 +231,5 @@ http://localhost:5000
 
 Supriya Nanekar
 
-GitHub:
+GitHub
 https://github.com/Nanekar123
