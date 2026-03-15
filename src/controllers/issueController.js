@@ -1,143 +1,115 @@
-import Issue from "../models/Issue.js";
-import Book from "../models/Book.js";
+import db from "../config/db.js";
 
+/* ISSUE BOOK */
 
-// 📚 ISSUE BOOK
-export const issueBook = async (req, res) => {
-  try {
-    const { userId, bookId } = req.body;
+export const issueBook = (req, res) => {
 
-    if (!userId || !bookId) {
-      return res.status(400).json({ message: "Missing userId or bookId" });
-    }
+  const { userId, bookId } = req.body;
 
-    // Check if book exists
-    const book = await Book.findById(bookId);
-    if (!book) {
-      return res.status(404).json({ message: "Book not found" });
-    }
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
 
-    // Check available copies
-    if (book.availableCopies <= 0) {
-      return res.status(400).json({ message: "Book not available" });
-    }
+  db.query(
+    "INSERT INTO issues (userId, bookId, dueDate, status) VALUES (?,?,?,?)",
+    [userId, bookId, dueDate, "ISSUED"],
+    (err) => {
 
-    // Prevent duplicate issue
-    const alreadyIssued = await Issue.findOne({
-      userId,
-      bookId,
-      status: "ISSUED"
-    });
+      if (err) return res.status(500).json(err);
 
-    if (alreadyIssued) {
-      return res.status(400).json({
-        message: "You already issued this book"
-      });
-    }
+      /* decrease available copies */
 
-    // Reduce available copies
-    book.availableCopies -= 1;
-    await book.save();
-
-    // Set due date (7 days)
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7);
-
-    const issue = new Issue({
-      userId,
-      bookId,
-      dueDate,
-      status: "ISSUED"
-    });
-
-    await issue.save();
-
-    res.json({
-      message: "Book issued successfully",
-      issue
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-
-
-// 🔁 RETURN BOOK
-export const returnBook = async (req, res) => {
-  try {
-    const issue = await Issue.findById(req.params.id).populate("bookId");
-
-    if (!issue) {
-      return res.status(404).json({ message: "Issue record not found" });
-    }
-
-    if (issue.status === "RETURNED") {
-      return res.status(400).json({ message: "Book already returned" });
-    }
-
-    const returnDate = new Date();
-    issue.returnDate = returnDate;
-
-    // Fine calculation
-    let fine = 0;
-
-    if (returnDate > issue.dueDate) {
-      const oneDay = 1000 * 60 * 60 * 24;
-      const lateDays = Math.ceil(
-        (returnDate - issue.dueDate) / oneDay
+      db.query(
+        "UPDATE books SET available = available - 1 WHERE id=? AND available>0",
+        [bookId]
       );
-      fine = lateDays * 10; // ₹10 per day
+
+      res.json({ message: "Book issued successfully" });
+
     }
-
-    issue.fine = fine;
-    issue.status = "RETURNED";
-
-    await issue.save();
-
-    // Increase book copies
-    issue.bookId.availableCopies += 1;
-    await issue.bookId.save();
-
-    res.json({
-      message: "Book returned successfully",
-      fine
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  );
 };
 
+/* RETURN BOOK */
 
+export const returnBook = (req, res) => {
 
-// 📋 GET ALL ISSUE HISTORY
-export const getAllIssues = async (req, res) => {
-  try {
-    const issues = await Issue.find()
-      .populate("userId", "name email")
-      .populate("bookId", "title author");
+  const issueId = req.params.id;
 
-    res.json(issues);
+  db.query(
+    "SELECT * FROM issues WHERE id=?",
+    [issueId],
+    (err, result) => {
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+      if (err) return res.status(500).json(err);
+
+      const issue = result[0];
+
+      const due = new Date(issue.dueDate);
+      const today = new Date();
+
+      let fine = 0;
+
+      if (today > due) {
+
+        const diff = Math.ceil(
+          (today - due) / (1000 * 60 * 60 * 24)
+        );
+
+        fine = diff * 10;
+
+      }
+
+      db.query(
+        "UPDATE issues SET status='RETURNED', returnDate=NOW(), fine=? WHERE id=?",
+        [fine, issueId]
+      );
+
+      db.query(
+        "UPDATE books SET available = available + 1 WHERE id=?",
+        [issue.bookId]
+      );
+
+      res.json({
+        message: "Book returned successfully",
+        fine
+      });
+
+    }
+  );
 };
 
+/* ALL ISSUES */
 
+export const getAllIssues = (req, res) => {
 
-// 📌 GET ACTIVE (NOT RETURNED)
-export const getActiveIssues = async (req, res) => {
-  try {
-    const issues = await Issue.find({ status: "ISSUED" })
-      .populate("userId", "name")
-      .populate("bookId", "title");
+  const sql = `
+  SELECT issues.*, books.title
+  FROM issues
+  JOIN books ON issues.bookId = books.id
+  `;
 
-    res.json(issues);
+  db.query(sql, (err, result) => {
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+    if (err) return res.status(500).json(err);
+
+    res.json(result);
+
+  });
+};
+
+/* ACTIVE ISSUES */
+
+export const getActiveIssues = (req, res) => {
+
+  db.query(
+    "SELECT * FROM issues WHERE status='ISSUED'",
+    (err, result) => {
+
+      if (err) return res.status(500).json(err);
+
+      res.json(result);
+
+    }
+  );
+
 };

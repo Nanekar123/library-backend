@@ -1,93 +1,270 @@
-import User from "../models/User.js";
+import db from "../config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
-export const sendOTP = async (req, res) => {
-  const { email } = req.body;
+/* =========================
+   OTP STORE
+========================= */
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+const otpStore = {};
 
-  let user = await User.findOne({ email });
+/* =========================
+   EMAIL CONFIG
+========================= */
 
-  if (!user) {
-    user = new User({ email });
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS
   }
+});
 
-  user.otp = otp;
-  user.otpExpiry = Date.now() + 5 * 60 * 1000;
-
-  await user.save();
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-
-  await transporter.sendMail({
-    to: email,
-    subject: "Your OTP Code",
-    text: `Your OTP is ${otp}`
-  });
-
-  res.json({ message: "OTP sent to email" });
-};
+/* =========================
+   USER REGISTER
+========================= */
 
 export const register = async (req, res) => {
-  const { name, email, password, otp } = req.body;
 
-  const user = await User.findOne({ email });
+  const { name, email, password } = req.body;
 
-  if (!user) {
-    return res.status(400).json({ message: "User not found" });
+  try {
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const sql =
+      "INSERT INTO users (name,email,password,role,isVerified,status) VALUES (?,?,?,?,?,?)";
+
+    db.query(
+      sql,
+      [name, email, hashedPassword, "user", 1, "active"],
+      (err) => {
+
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        }
+
+        res.json({ message: "User registered successfully" });
+      }
+    );
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+/* =========================
+   AUTHOR REGISTER
+========================= */
+
+export const registerAuthor = async (req, res) => {
+
+  try {
+
+    const {
+      name,
+      email,
+      password,
+      biography,
+      qualifications,
+      experience
+    } = req.body;
+
+    /* manuscript upload */
+
+    const manuscript = req.file ? req.file.filename : null;
+
+    /* check existing email */
+
+    db.query(
+      "SELECT * FROM users WHERE email=?",
+      [email],
+      async (err, result) => {
+
+        if (result.length > 0) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        /* insert user */
+
+        db.query(
+
+          `INSERT INTO users (name,email,password,role,isVerified,status)
+           VALUES (?,?,?,?,?,?)`,
+
+          [name, email, hashedPassword, "author", 1, "pending"],
+
+          (err, userResult) => {
+
+            if (err) {
+              return res.status(500).json(err);
+            }
+
+            const userId = userResult.insertId;
+
+            /* insert author profile */
+
+            db.query(
+
+              `INSERT INTO authors
+               (userId,biography,qualifications,experience,status,manuscript)
+               VALUES (?,?,?,?,?,?)`,
+
+              [
+                userId,
+                biography,
+                qualifications,
+                experience,
+                "pending",
+                manuscript
+              ],
+
+              (err) => {
+
+                if (err) {
+                  return res.status(500).json(err);
+                }
+
+                res.json({
+                  message: "Author request submitted successfully"
+                });
+
+              }
+
+            );
+
+          }
+
+        );
+
+      }
+
+    );
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({ message: "Registration error" });
+
   }
 
-  // ✅ Fix OTP comparison
-  if (String(user.otp) !== String(otp)) {
+};
+
+
+/* =========================
+   LOGIN
+========================= */
+
+export const login = (req, res) => {
+
+  const { email, password, role } = req.body;
+
+  const sql = "SELECT * FROM users WHERE email=? AND role=?";
+
+  db.query(sql, [email, role], async (err, result) => {
+
+    if (err) return res.status(500).json({ message: err.message });
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result[0];
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    if (role === "author" && user.status !== "approved") {
+      return res.status(403).json({
+        message: "Author not approved by admin yet"
+      });
+    }
+
+    /* generate OTP */
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    otpStore[email] = otp;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Login OTP",
+      text: `Your OTP is ${otp}`
+    });
+
+    res.json({ message: "OTP sent to email" });
+
+  });
+
+};
+
+
+/* =========================
+   VERIFY OTP
+========================= */
+
+export const verifyLoginOtp = (req, res) => {
+
+  const { email, otp } = req.body;
+
+  if (otpStore[email] != otp) {
     return res.status(400).json({ message: "Invalid OTP" });
   }
 
-  // ✅ Check expiry
-  if (user.otpExpiry < Date.now()) {
-    return res.status(400).json({ message: "OTP expired" });
-  }
+  const sql = "SELECT * FROM users WHERE email=?";
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  db.query(sql, [email], (err, result) => {
 
-  user.name = name;
-  user.password = hashedPassword;
-  user.isVerified = true;
-  user.otp = null;
-  user.otpExpiry = null;
+    if (err) return res.status(500).json({ message: err.message });
 
-  await user.save();
+    const user = result[0];
 
-  res.json({ message: "Registration successful" });
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    delete otpStore[email];
+
+    res.json({
+      token,
+      role: user.role
+    });
+
+  });
+
 };
 
-export const login = async (req, res) => {
-  const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+/* =========================
+   RESEND OTP
+========================= */
 
-  if (!user || !user.isVerified) {
-    return res.status(400).json({ message: "User not found or not verified" });
-  }
+export const resendOtp = async (req, res) => {
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const { email } = req.body;
 
-  if (!isMatch) {
-    return res.status(400).json({ message: "Invalid credentials" });
-  }
+  const otp = Math.floor(100000 + Math.random() * 900000);
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+  otpStore[email] = otp;
 
-  res.json({ token });
+  await transporter.sendMail({
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Resend OTP",
+    text: `Your OTP is ${otp}`
+  });
+
+  res.json({ message: "OTP resent successfully" });
+
 };

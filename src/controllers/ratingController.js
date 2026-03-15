@@ -1,38 +1,162 @@
-import Rating from "../models/Rating.js";
-import Book from "../models/Book.js";
+import db from "../config/db.js";
 
-export const addRating = async (req, res) => {
-  try {
 
-    const { bookId, rating } = req.body;
+/* =========================
+   ADD RATING
+========================= */
 
-    // Save rating
-    const newRating = new Rating({
-      bookId,
-      rating
+export const addRating = (req, res) => {
+
+  const { bookId, rating } = req.body;
+
+  if (!bookId || !rating) {
+    return res.status(400).json({
+      message: "BookId and rating are required"
     });
-
-    await newRating.save();
-
-    // Calculate new average rating
-    const ratings = await Rating.find({ bookId });
-
-    const avg =
-      ratings.reduce((sum, r) => sum + r.rating, 0) /
-      ratings.length;
-
-    // Update book average rating
-    await Book.findByIdAndUpdate(bookId, {
-      averageRating: avg
-    });
-
-    res.status(201).json({
-      message: "Rating added successfully",
-      averageRating: avg
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Rating failed" });
   }
+
+  const sql = `
+    INSERT INTO ratings (bookId, rating)
+    VALUES (?,?)
+  `;
+
+  db.query(sql, [bookId, rating], (err, result) => {
+
+    if (err) {
+      return res.status(500).json({
+        message: err.message
+      });
+    }
+
+    res.json({
+      message: "Rating added successfully"
+    });
+
+  });
+
+};
+
+
+/* =========================
+   GET ALL RATINGS
+========================= */
+
+export const getRatings = (req, res) => {
+
+  const sql = `
+    SELECT * FROM ratings
+  `;
+
+  db.query(sql, (err, result) => {
+
+    if (err) {
+      return res.status(500).json({
+        message: err.message
+      });
+    }
+
+    res.json(result);
+
+  });
+
+};
+
+
+/* =========================
+   GET RATINGS WITH BOOK NAME
+========================= */
+
+export const getRatingsWithBook = (req, res) => {
+
+  const sql = `
+    SELECT 
+      ratings.id,
+      ratings.bookId,
+      books.title,
+      ratings.rating
+    FROM ratings
+    JOIN books ON ratings.bookId = books.id
+    ORDER BY ratings.id DESC
+  `;
+
+  db.query(sql, (err, result) => {
+
+    if (err) {
+      return res.status(500).json({
+        message: err.message
+      });
+    }
+
+    res.json(result);
+
+  });
+
+};
+
+
+/* =========================
+   GET AVERAGE RATING
+========================= */
+
+export const getAverageRating = (req, res) => {
+
+  const bookId = req.params.bookId;
+
+  const sql = `
+    SELECT AVG(rating) AS averageRating
+    FROM ratings
+    WHERE bookId = ?
+  `;
+
+  db.query(sql, [bookId], (err, result) => {
+
+    if (err) {
+      return res.status(500).json({
+        message: err.message
+      });
+    }
+
+    res.json({
+      bookId: bookId,
+      averageRating: result[0].averageRating
+    });
+
+  });
+
+};
+
+
+/* =========================
+   AUTHOR BOOK RATINGS
+========================= */
+
+export const getAuthorBooksRatings = (req, res) => {
+
+  const authorId = req.params.authorId;
+
+  const sql = `
+  SELECT 
+    b.id,
+    b.title,
+    b.category,
+    AVG(r.rating) AS rating,
+    COUNT(r.id) AS reviews
+  FROM books b
+  LEFT JOIN ratings r ON b.id = r.bookId
+  WHERE b.author_id = ?
+  GROUP BY b.id
+  `;
+
+  db.query(sql, [authorId], (err, result) => {
+
+    if (err) {
+      return res.status(500).json({
+        message: err.message
+      });
+    }
+
+    res.json(result);
+
+  });
+
 };
