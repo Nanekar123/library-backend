@@ -62,6 +62,7 @@ library-backend
 ├── uploads
 ├── server.js
 ├── Dockerfile
+├── docker-compose.yml
 ├── .dockerignore
 ├── package.json
 └── README.md
@@ -160,7 +161,7 @@ npm start
 
 ---
 
-## 🐳 Docker Setup (Recommended)
+## 🐳 Docker Setup (Backend Only)
 
 ### 1️⃣ Build Docker Image
 
@@ -176,11 +177,34 @@ docker run -p 5000:5000 --env-file .env library-backend
 
 ### 3️⃣ Important Configuration
 
-Make sure `.env` contains:
-
 ```
 DB_HOST=host.docker.internal
 DB_PORT=3306
+```
+
+---
+
+## 🐳 Docker Compose Setup (Full System)
+
+Run backend + MySQL together:
+
+```
+docker-compose up --build
+```
+
+### 🔹 Services
+
+* Backend → Port 5000
+* MySQL → Port 3306 (internal)
+
+### 🔹 Important `.env` change
+
+```
+DB_HOST=db
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=library_db
 ```
 
 ---
@@ -202,8 +226,9 @@ http://localhost:5000/api-docs
 ## 🧠 Deployment Notes
 
 * Backend is containerized using Docker
+* Full system can be started using Docker Compose
 * Environment variables are managed via `.env`
-* MySQL runs on host machine and connects via Docker network
+* MySQL can run either locally or inside Docker
 * Application is production-ready and scalable
 
 ---
@@ -211,7 +236,6 @@ http://localhost:5000/api-docs
 ## 💻 Frontend Repository
 
 Frontend UI:
-
 https://github.com/Nanekar123/library-frontend
 
 ---
@@ -233,5 +257,6 @@ This project demonstrates a complete backend system with:
 * Secure authentication
 * RESTful API design
 * Docker-based deployment
+* Docker Compose multi-service setup
 
 ---
