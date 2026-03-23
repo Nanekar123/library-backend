@@ -1,0 +1,7 @@
+node_modules
+uploads
+.git
+.gitignore
+.env
+Dockerfile
+npm-debug.log
