@@ -1,6 +1,6 @@
-# Library Management System – Backend
+# 📚 Library Management System – Backend
 
-## Overview
+## 🚀 Overview
 
 The **Library Management System Backend** provides RESTful APIs for managing books, users, authors, rentals, reviews, notifications, and analytics within a digital library platform.
 
@@ -14,25 +14,24 @@ The application supports **role-based access control** for:
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 * Node.js
 * Express.js
 * MySQL
 * JWT Authentication
 * Multer (File Uploads)
-* Axios (API communication)
+* Axios
 * Rate Limiting Middleware
+* Docker 🐳
 
 ---
 
-## System Architecture
+## 🏗️ System Architecture
 
 The application follows a **three-tier architecture**.
 
-Frontend → Backend → Database
-
-```text
+```
 React Frontend
       │
       │ HTTP Requests
@@ -44,26 +43,9 @@ Node.js / Express Backend
 MySQL Database
 ```
 
-### Components
-
-**Frontend**
-
-* React based UI
-* Sends API requests using Axios
-
-**Backend**
-
-* Express REST APIs
-* Business logic and authentication
-
-**Database**
-
-* MySQL relational database
-* Stores books, users, issues and analytics data
-
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 library-backend
@@ -71,54 +53,23 @@ library-backend
 ├── src
 │   ├── config
 │   │   └── db.js
-│
 │   ├── controllers
-│   │   ├── authController.js
-│   │   ├── bookController.js
-│   │   ├── issueController.js
-│   │   ├── ratingController.js
-│   │   ├── analyticsController.js
-│   │   ├── authorController.js
-│   │   ├── manuscriptController.js
-│   │   ├── notificationController.js
-│   │   ├── reviewController.js
-│   │   ├── wishlistController.js
-│   │   └── userController.js
-│
 │   ├── middleware
-│   │   ├── authMiddleware.js
-│   │   ├── roleMiddleware.js
-│   │   ├── rateLimiter.js
-│   │   └── upload.js
-│
 │   ├── models
-│   │   ├── Book.js
-│   │   ├── Issue.js
-│   │   ├── Rating.js
-│   │   └── User.js
-│
 │   ├── routes
-│   │   ├── authRoutes.js
-│   │   ├── bookRoutes.js
-│   │   ├── issueRoutes.js
-│   │   ├── ratingRoutes.js
-│   │   ├── authorRoutes.js
-│   │   ├── manuscriptRoutes.js
-│   │   ├── wishlistRoutes.js
-│   │   ├── notificationRoutes.js
-│   │   └── analyticsRoutes.js
-│
 │   └── utils
 │
 ├── uploads
 ├── server.js
+├── Dockerfile
+├── .dockerignore
 ├── package.json
 └── README.md
 ```
 
 ---
 
-## Key Features
+## ✨ Key Features
 
 * Role-based authentication (Admin, Author, Reader)
 * Book catalog management
@@ -128,16 +79,25 @@ library-backend
 * Wishlist functionality
 * Admin analytics dashboard
 * Notification services
+* Dockerized backend for easy deployment
 
 ---
 
-## Example API Endpoints
+## 📡 API Documentation
 
-### Login
+Swagger UI available at:
+
+```
+http://localhost:5000/api-docs
+```
+
+---
+
+## 📌 Example API Endpoints
+
+### 🔐 Login
 
 POST `/api/auth/login`
-
-Request
 
 ```
 {
@@ -146,25 +106,11 @@ Request
 }
 ```
 
-Response
-
-```
-{
-  "token": "jwt_token",
-  "user": {
-    "id": 1,
-    "role": "reader"
-  }
-}
-```
-
 ---
 
-### Get Books
+### 📚 Get Books
 
 GET `/api/books`
-
-Response
 
 ```
 [
@@ -179,7 +125,7 @@ Response
 
 ---
 
-## Installation
+## ⚙️ Installation (Without Docker)
 
 Clone repository
 
@@ -202,24 +148,67 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=yourpassword
 DB_NAME=library_db
+DB_PORT=3306
 JWT_SECRET=secretkey
 ```
 
-Start server
+Run server
 
 ```
 npm start
 ```
 
-Server runs at
+---
+
+## 🐳 Docker Setup (Recommended)
+
+### 1️⃣ Build Docker Image
+
+```
+docker build -t library-backend .
+```
+
+### 2️⃣ Run Container
+
+```
+docker run -p 5000:5000 --env-file .env library-backend
+```
+
+### 3️⃣ Important Configuration
+
+Make sure `.env` contains:
+
+```
+DB_HOST=host.docker.internal
+DB_PORT=3306
+```
+
+---
+
+## 🌐 Access Application
 
 ```
 http://localhost:5000
 ```
 
+Swagger Docs:
+
+```
+http://localhost:5000/api-docs
+```
+
 ---
 
-## Frontend Repository
+## 🧠 Deployment Notes
+
+* Backend is containerized using Docker
+* Environment variables are managed via `.env`
+* MySQL runs on host machine and connects via Docker network
+* Application is production-ready and scalable
+
+---
+
+## 💻 Frontend Repository
 
 Frontend UI:
 
@@ -227,9 +216,22 @@ https://github.com/Nanekar123/library-frontend
 
 ---
 
-## Author
+## 👩‍💻 Author
 
-Supriya Nanekar
+**Supriya Nanekar**
 
-GitHub
+GitHub:
 https://github.com/Nanekar123
+
+---
+
+## 🏁 Conclusion
+
+This project demonstrates a complete backend system with:
+
+* Scalable architecture
+* Secure authentication
+* RESTful API design
+* Docker-based deployment
+
+---
